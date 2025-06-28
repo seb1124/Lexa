@@ -38,64 +38,6 @@ const SignLanguageApp = ({ onBackToLanding }) => {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const currentLandmarksRef = useRef(null);
 
-  // Load training data from localStorage
-  useEffect(() => {
-    const data = localStorage.getItem('asl_training_data');
-    const labels = localStorage.getItem('asl_training_labels');
-    if (data && labels) {
-      setTrainingData(JSON.parse(data));
-      setTrainingLabels(JSON.parse(labels));
-    }
-  }, []);
-
-  // Save training data to localStorage
-  const saveToLocalStorage = () => {
-    localStorage.setItem('asl_training_data', JSON.stringify(trainingData));
-    localStorage.setItem('asl_training_labels', JSON.stringify(trainingLabels));
-    alert("Training data saved.");
-  };
-
-  const clearTrainingData = () => {
-    setTrainingData([]);
-    setTrainingLabels([]);
-    localStorage.clear();
-    alert("Training data cleared.");
-  };
-
-  const exportTrainingData = () => {
-    const data = { trainingData, trainingLabels };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "asl_training_data.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const importTrainingData = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      try {
-        const data = JSON.parse(e.target.result);
-        if (Array.isArray(data.trainingData) && Array.isArray(data.trainingLabels)) {
-          setTrainingData(data.trainingData);
-          setTrainingLabels(data.trainingLabels);
-          alert(`Imported ${data.trainingLabels.length} samples.`);
-          saveToLocalStorage();
-        } else {
-          alert("Invalid file format.");
-        }
-      } catch (err) {
-        alert("Failed to import: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-  };
 
   // KNN Classifier
   function euclidean(a, b) {
@@ -154,6 +96,8 @@ const SignLanguageApp = ({ onBackToLanding }) => {
           const features = currentLandmarksRef.current.flatMap(pt => [pt.x, pt.y, pt.z]);
           if (trainingData.length > 0) {
             const predicted = classifyGesture(features);
+            // Debug log: print target and predicted letter
+            console.log(`Target letter: ${currentLetter}, Predicted letter: ${predicted}`);
             setPrediction(predicted);
             if (predicted === currentLetter) {
               setIsCorrect(true);
@@ -258,6 +202,27 @@ const SignLanguageApp = ({ onBackToLanding }) => {
     };
     // eslint-disable-next-line
   }, []);
+
+  // Fetch training data from backend API when session starts
+  useEffect(() => {
+    if (!sessionActive) return;
+
+    const fetchTrainingData = async () => {
+      try {
+        const response = await fetch('/api/load-model');
+        const result = await response.json();
+        // Expecting result.data.trainingData and result.data.trainingLabels
+        if (result.status === 'success' && result.data) {
+          setTrainingData(result.data.trainingData || []);
+          setTrainingLabels(result.data.trainingLabels || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch training data:', err);
+      }
+    };
+
+    fetchTrainingData();
+  }, [sessionActive]);
 
   return (
     <div className="h-screen bg-gray-900 text-white p-6 overflow-auto">
