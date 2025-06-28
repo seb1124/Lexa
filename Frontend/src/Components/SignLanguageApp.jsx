@@ -384,28 +384,6 @@ const SignLanguageApp = ({ onBackToLanding }) => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Session Summary */}
-            <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
-              <h3 className="text-2xl font-bold mb-6 text-center">Session Summary</h3>
-
-              <div className="space-y-4">
-                <div className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
-                  <span className="font-semibold">Best Letter</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-green-400">{bestLetter}</span>
-                    <Trophy className="text-green-400 w-5 h-5" />
-                  </div>
-                </div>
-
-                <div className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
-                  <span className="font-semibold">Worst Letter</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-red-400">{worstLetter}</span>
-                    <TrendingDown className="text-red-400 w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Correct Feedback */}
             <div className={`rounded-xl p-6 shadow-xl border transition-all duration-500 ${
@@ -465,6 +443,28 @@ const SignLanguageApp = ({ onBackToLanding }) => {
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-500 rounded"></div>
                   <span>Completed</span>
+                </div>
+              </div>
+            </div>
+            {/* Session Summary */}
+            <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
+              <h3 className="text-2xl font-bold mb-6 text-center">Session Summary</h3>
+
+              <div className="space-y-4">
+                <div className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
+                  <span className="font-semibold">Best Letter</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-green-400">{bestLetter}</span>
+                    <Trophy className="text-green-400 w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
+                  <span className="font-semibold">Worst Letter</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-red-400">{worstLetter}</span>
+                    <TrendingDown className="text-red-400 w-5 h-5" />
+                  </div>
                 </div>
               </div>
             </div>
