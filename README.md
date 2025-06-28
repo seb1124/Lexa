@@ -61,4 +61,8 @@ Lexa is an interactive web application for learning and practicing the American 
 - Training data for each ASL letter is stored on the backend and loaded into the app at session start.
 - Tailwind CSS is used for rapid, responsive UI styling.
 
+---
+
+**Lexa was created at the GemiKnights UCF Hackathon Summer 2025 by Hector Ramos, Sami Najib, and Alexander Jackson.**
+
 
