@@ -10,12 +10,16 @@ function App() {
     setShowLandingPage(false);
   };
 
+  const handleBackToLanding = () => {
+    setShowLandingPage(true);
+  };
+
   return (
     <>
       {showLandingPage ? (
         <LandingPage onStartLearning={handleStartLearning} />
       ) : (
-        <SignLanguageApp />
+        <SignLanguageApp onBackToLanding={handleBackToLanding} />
       )}
     </>
   );

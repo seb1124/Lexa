@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Hand, Trophy, TrendingDown, Play, Pause, RotateCcw } from 'lucide-react';
+import { Camera, Hand, Trophy, TrendingDown, Play, Pause, RotateCcw, ArrowLeft } from 'lucide-react';
 
-const SignLanguageApp = () => {
+const SignLanguageApp = ({ onBackToLanding }) => {
   const [currentLetter, setCurrentLetter] = useState('A');
   const [isCorrect, setIsCorrect] = useState(false);
   const [correctCount, setCorrectCount] = useState(6);
@@ -89,7 +89,18 @@ const SignLanguageApp = () => {
     <div className="h-screen bg-gray-900 text-white p-6 overflow-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
+          {/* Back Button */}
+          {onBackToLanding && (
+            <button
+              onClick={onBackToLanding}
+              className="absolute left-0 top-0 flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="hidden sm:inline">Back to Home</span>
+            </button>
+          )}
+          
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-2">
             ASL Alphabet Trainer
           </h1>
@@ -233,9 +244,9 @@ const SignLanguageApp = () => {
                       <div className="bg-blue-500 rounded-full p-3">
                         <span className="text-white font-bold text-lg">{correctCount}</span>
                       </div>
-                      <span className="text-2xl font-bold text-gray-300">Ready</span>
+                      <span className="text-2xl font-bold text-gray-300">Streak!</span>
                     </div>
-                    <p className="text-gray-400">Show the sign for letter {currentLetter}</p>
+                    <p className="text-gray-400">Keep going!</p>
                   </div>
                 )}
               </div>

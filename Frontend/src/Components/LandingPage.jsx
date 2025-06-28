@@ -109,7 +109,7 @@ const LandingPage = ({ onStartLearning }) => {
       {/* Footer */}
       <div className="py-8 px-6 bg-gray-900 border-t border-gray-800">
         <div className="max-w-4xl mx-auto text-center text-gray-400">
-          <p>&copy; 2025 ASL Alphabet Trainer. Empowering communication through technology.</p>
+          <p>&copy; 2025 GemiKnights Hackathon</p>
         </div>
       </div>
     </div>
