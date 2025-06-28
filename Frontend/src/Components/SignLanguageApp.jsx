@@ -37,6 +37,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
   const mpHandsRef = useRef(null);
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const currentLandmarksRef = useRef(null);
+  const hasGuessedRef = useRef(false);
 
 
   // KNN Classifier
@@ -99,7 +100,8 @@ const SignLanguageApp = ({ onBackToLanding }) => {
             // Debug log: print target and predicted letter
             console.log(`Target letter: ${currentLetter}, Predicted letter: ${predicted}`);
             setPrediction(predicted);
-            if (predicted === currentLetter) {
+            if (predicted === currentLetter && !hasGuessedRef.current) {
+              hasGuessedRef.current = true;
               setIsCorrect(true);
               setCorrectCount(prev => prev + 1);
               setFeedback("✅ Correct!");
@@ -107,7 +109,8 @@ const SignLanguageApp = ({ onBackToLanding }) => {
                 setIsCorrect(false);
                 setFeedback('');
                 nextLetter();
-              }, 1500);
+                hasGuessedRef.current = false; // Reset for next letter
+              }, 1000);
             }
           } else {
             setPrediction('None');
@@ -223,6 +226,25 @@ const SignLanguageApp = ({ onBackToLanding }) => {
 
     fetchTrainingData();
   }, [sessionActive]);
+
+  useEffect(() => {
+    setCurrentLetter(alphabet[selectedLetterIdx]);
+    hasGuessedRef.current = false;
+    // eslint-disable-next-line
+  }, [selectedLetterIdx]);
+
+  function nextLetter() {
+    setSelectedLetterIdx(prevIdx => {
+      const nextIdx = prevIdx + 1;
+      if (nextIdx < alphabet.length) {
+        return nextIdx;
+      } else {
+        setFeedback("🎉 You've completed the alphabet!");
+        setSessionActive(false);
+        return prevIdx;
+      }
+    });
+  }
 
   return (
     <div className="h-screen bg-gray-900 text-white p-6 overflow-auto">
