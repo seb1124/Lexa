@@ -310,7 +310,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
 
             {/* Video Container */}
             <div className="relative bg-black rounded-xl overflow-hidden shadow-2xl border-4 border-gray-700">
-              <div className="aspect-video w-full">
+              <div className="aspect-video w-full relative" style={{ aspectRatio: '16/9', width: '100%' }}>
                 {!sessionActive ? (
                   <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-800 to-gray-900">
                     <div className="text-center">
@@ -336,20 +336,15 @@ const SignLanguageApp = ({ onBackToLanding }) => {
                     </div>
                   </div>
                 ) : (
-                  <div
-                    className="relative"
-                    style={{ width: 640, height: 480, margin: "0 auto" }}
-                  >
+                  <>
                     <video
                       ref={videoRef}
                       autoPlay
                       playsInline
                       muted
-                      width={640}
-                      height={480}
                       style={{
-                        width: 640,
-                        height: 480,
+                        width: "100%",
+                        height: "100%",
                         objectFit: "cover",
                         transform: "scaleX(-1)",
                         display: "block",
@@ -364,8 +359,9 @@ const SignLanguageApp = ({ onBackToLanding }) => {
                       width={640}
                       height={480}
                       style={{
-                        width: 640,
-                        height: 480,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
                         position: "absolute",
                         left: 0,
                         top: 0,
@@ -373,7 +369,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
                         zIndex: 2,
                       }}
                     />
-                  </div>
+                  </>
                 )}
               </div>
 
