@@ -45,7 +45,9 @@ const SignLanguageApp = ({ onBackToLanding }) => {
   function euclidean(a, b) {
     return Math.sqrt(a.reduce((sum, val, i) => sum + (val - b[i]) ** 2, 0));
   }
-  function classifyGesture(input, k = 3, threshold = 1.5) {
+  
+  // KNN Classifier
+  function classifyGesture(input, k = 5, threshold = 0.5) {
     if (trainingData.length === 0) return "None";
     const distances = trainingData.map((sample, i) => ({
       label: trainingLabels[i],
@@ -53,7 +55,11 @@ const SignLanguageApp = ({ onBackToLanding }) => {
     }));
     distances.sort((a, b) => a.dist - b.dist);
     const topK = distances.slice(0, k);
-    if (topK[0].dist > threshold) return "None";
+
+    if (topK[0].dist > threshold) {
+      return "None";
+    }
+
     const votes = {};
     topK.forEach(d => votes[d.label] = (votes[d.label] || 0) + 1);
     return Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0];
@@ -95,7 +101,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
           // eslint-disable-next-line no-undef
           drawLandmarks(ctx, results.multiHandLandmarks[0], { color: '#ff0', lineWidth: 2 });
           currentLandmarksRef.current = results.multiHandLandmarks[0];
-          const features = currentLandmarksRef.current.flatMap(pt => [pt.x, pt.y, pt.z]);
+          const features = normalizeLandmarks(currentLandmarksRef.current);
           if (trainingData.length > 0) {
             const predicted = classifyGesture(features);
             // Debug log: print target and predicted letter
@@ -246,6 +252,25 @@ const SignLanguageApp = ({ onBackToLanding }) => {
         return prevIdx;
       }
     });
+  }
+
+  function normalizeLandmarks(landmarks) {
+    // Use wrist as origin and scale by max distance from wrist
+    const base = landmarks[0];
+    let maxDist = 0;
+    for (const pt of landmarks) {
+      const dist = Math.sqrt(
+        (pt.x - base.x) ** 2 +
+        (pt.y - base.y) ** 2 +
+        (pt.z - base.z) ** 2
+      );
+      if (dist > maxDist) maxDist = dist;
+    }
+    return landmarks.map(pt => [
+      (pt.x - base.x) / maxDist,
+      (pt.y - base.y) / maxDist,
+      (pt.z - base.z) / maxDist
+    ]).flat();
   }
 
   return (

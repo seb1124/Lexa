@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sign Language Practice</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #111;
+      color: #fff;
+    }
+    button {
+      margin: 4px;
+      padding: 10px 20px;
+      font-size: 1em;
+    }
+    h2, #feedback {
+      font-size: 1.5em;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sign Language Practice</h1>
+  <div id="container" style="position:relative; display:inline-block;">
+    <video id="video" width="640" height="480" autoplay muted playsinline style="transform:scaleX(-1); position:relative; z-index:1;"></video>
+    <canvas id="overlay" width="640" height="480" style="position:absolute; left:0; top:0; pointer-events:none; z-index:2;"></canvas>
+  </div>
+
+  <div>
+    <button id="prevLetter" onclick="cycleLetter(-1)">&#8592;</button>
+    <span id="currentLetter" style="display:inline-block; width:40px; font-size:1.2em;">A</span>
+    <button id="nextLetter" onclick="cycleLetter(1)">&#8594;</button>
+    <button onclick="captureLetter()">Capture</button>
+  </div>
+  <div>
+    <button onclick="saveToLocalStorage()">💾 Save Data</button>
+    <button onclick="clearTrainingData()">🗑️ Clear Data</button>
+    <button onclick="exportTrainingData()">⬇️ Export JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importTrainingData(event)">
+    <button onclick="document.getElementById('importFile').click()">⬆️ Import JSON</button>
+  </div>
+
+  <h2>Prediction: <span id="prediction">None</span></h2>
+  <h2 id="target">Sign the letter "A"</h2>
+  <p id="feedback"></p>
+
+  <!-- MediaPipe Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+  <script>
+    const video = document.getElementById('video');
+    const predictionEl = document.getElementById('prediction');
+    const feedbackEl = document.getElementById("feedback");
+    const targetEl = document.getElementById("target");
+    const overlay = document.getElementById('overlay');
+    const octx = overlay.getContext('2d');
+
+    const trainingData = [];
+    const trainingLabels = [];
+    let currentLandmarks = null;
+    let currentTarget = 'A';
+
+    // Save/load training data
+    function saveToLocalStorage() {
+      localStorage.setItem('asl_training_data', JSON.stringify(trainingData));
+      localStorage.setItem('asl_training_labels', JSON.stringify(trainingLabels));
+      alert("Training data saved.");
+    }
+
+    function loadFromLocalStorage() {
+      const data = localStorage.getItem('asl_training_data');
+      const labels = localStorage.getItem('asl_training_labels');
+      if (data && labels) {
+        trainingData.push(...JSON.parse(data));
+        trainingLabels.push(...JSON.parse(labels));
+        console.log(`Loaded ${trainingLabels.length} samples`);
+      }
+    }
+
+    function clearTrainingData() {
+      trainingData.length = 0;
+      trainingLabels.length = 0;
+      localStorage.clear();
+      alert("Training data cleared.");
+    }
+
+    // Prompt system
+    function pickNextLetter() {
+      const letters = getLetters();
+      if (letters.length === 0) {
+        targetEl.textContent = `Add samples to start practicing!`;
+        return;
+      }
+      const idx = Math.floor(Math.random() * letters.length);
+      currentTarget = letters[idx];
+      targetEl.textContent = `Sign the letter "${currentTarget}"`;
+    }
+
+    function showFeedback(correct) {
+      feedbackEl.textContent = correct ? "✅ Correct!" : "❌ Try again!";
+      feedbackEl.style.color = correct ? "lightgreen" : "tomato";
+    }
+
+    function checkPrediction(predicted) {
+      if (predicted === currentTarget) {
+        showFeedback(true);
+        setTimeout(() => {
+          showFeedback(false);
+          pickNextLetter();
+        }, 1500);
+      }
+    }
+
+    // KNN Classifier
+    function classifyGesture(input, k = 5, threshold = 0.5) { // Try k=5, threshold=0.5 for normalized data
+      if (trainingData.length === 0) return "None";
+      const distances = trainingData.map((sample, i) => ({
+        label: trainingLabels[i],
+        dist: euclidean(sample, input)
+      }));
+      distances.sort((a, b) => a.dist - b.dist);
+      const topK = distances.slice(0, k);
+
+      if (topK[0].dist > threshold) {
+        return "None";
+      }
+
+      const votes = {};
+      topK.forEach(d => votes[d.label] = (votes[d.label] || 0) + 1);
+      return Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0];
+    }
+
+    function euclidean(a, b) {
+      return Math.sqrt(a.reduce((sum, val, i) => sum + (val - b[i]) ** 2, 0));
+    }
+
+    // MediaPipe Hands
+    const hands = new Hands({
+      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
+    });
+
+    hands.onResults(results => {
+      // Clear and mirror the overlay
+      octx.save();
+      octx.clearRect(0, 0, overlay.width, overlay.height);
+      octx.translate(overlay.width, 0);
+      octx.scale(-1, 1);
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        for (const landmarks of results.multiHandLandmarks) {
+          drawConnectors(octx, landmarks, HAND_CONNECTIONS, {color: '#0ff', lineWidth: 4});
+          drawLandmarks(octx, landmarks, {color: '#ff0', lineWidth: 2});
+        }
+        currentLandmarks = results.multiHandLandmarks[0];
+        const features = normalizeLandmarks(currentLandmarks); // <--- Use normalized
+        if (trainingData.length > 0) {
+          const predicted = classifyGesture(features);
+          predictionEl.textContent = predicted;
+          checkPrediction(predicted);
+        }
+      } else {
+        currentLandmarks = null;
+        predictionEl.textContent = 'None';
+      }
+      octx.restore();
+    });
+
+    const camera = new Camera(video, {
+      onFrame: async () => {
+        await hands.send({ image: video });
+      },
+      width: 640,
+      height: 480
+    });
+
+    // Letter cycling logic
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    let selectedLetterIdx = 0;
+
+    function updateLetterDisplay() {
+      document.getElementById('currentLetter').textContent = alphabet[selectedLetterIdx];
+    }
+
+    function cycleLetter(direction) {
+      selectedLetterIdx = (selectedLetterIdx + direction + alphabet.length) % alphabet.length;
+      updateLetterDisplay();
+    }
+
+    // Modified capture function to use selected letter
+    function captureLetter() {
+      const letter = alphabet[selectedLetterIdx];
+      if (currentLandmarks) {
+        const norm = normalizeLandmarks(currentLandmarks);
+        trainingData.push(norm);
+        trainingLabels.push(letter);
+        console.log(`Captured ${letter}`);
+      } else {
+        alert("No hand detected.");
+      }
+    }
+
+    function exportTrainingData() {
+      const data = {
+        trainingData,
+        trainingLabels
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "asl_training_data.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importTrainingData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data.trainingData) && Array.isArray(data.trainingLabels)) {
+            trainingData.length = 0;
+            trainingLabels.length = 0;
+            trainingData.push(...data.trainingData);
+            trainingLabels.push(...data.trainingLabels);
+            alert(`Imported ${trainingLabels.length} samples.`);
+            saveToLocalStorage();
+          } else {
+            alert("Invalid file format.");
+          }
+        } catch (err) {
+          alert("Failed to import: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Dynamically build the set of letters from trainingLabels
+    function getLetters() {
+      return Array.from(new Set(trainingLabels));
+    }
+
+    // Normalize landmarks using the wrist as the origin
+    function normalizeLandmarks(landmarks) {
+      // Use wrist as origin and scale by max distance from wrist
+      const base = landmarks[0];
+      let maxDist = 0;
+      for (const pt of landmarks) {
+        const dist = Math.sqrt(
+          (pt.x - base.x) ** 2 +
+          (pt.y - base.y) ** 2 +
+          (pt.z - base.z) ** 2
+        );
+        if (dist > maxDist) maxDist = dist;
+      }
+      return landmarks.map(pt => [
+        (pt.x - base.x) / maxDist,
+        (pt.y - base.y) / maxDist,
+        (pt.z - base.z) / maxDist
+      ]).flat();
+    }
+
+    // Start app
+    camera.start();
+    loadFromLocalStorage();
+    pickNextLetter();
+
+    // Initialize letter display on page load
+    updateLetterDisplay();
+  </script>
+</body>
+</html>
