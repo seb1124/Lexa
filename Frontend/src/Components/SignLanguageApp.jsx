@@ -30,6 +30,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
   const [trainingData, setTrainingData] = useState([]);
   const [trainingLabels, setTrainingLabels] = useState([]);
   const [selectedLetterIdx, setSelectedLetterIdx] = useState(0);
+  const [completedLetters, setCompletedLetters] = useState([]);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -105,6 +106,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
               setIsCorrect(true);
               setCorrectCount(prev => prev + 1);
               setFeedback("✅ Correct!");
+              setCompletedLetters(prev => [...new Set([...prev, currentLetter])]);
               setTimeout(() => {
                 setIsCorrect(false);
                 setFeedback('');
@@ -419,14 +421,10 @@ const SignLanguageApp = ({ onBackToLanding }) => {
                   <div
                     key={letter}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all duration-200 ${
-                      letter === currentLetter
-                        ? 'bg-blue-500 text-white ring-2 ring-blue-300'
-                        : letter === bestLetter
-                        ? 'bg-green-500 text-white'
-                        : letter === worstLetter
-                        ? 'bg-red-500 text-white'
-                        : index < alphabet.indexOf(currentLetter)
-                        ? 'bg-gray-600 text-gray-300'
+                      index < selectedLetterIdx
+                        ? 'bg-green-500 text-white' 
+                        : index === selectedLetterIdx
+                        ? 'bg-blue-500 text-white'
                         : 'bg-gray-700 text-gray-400'
                     }`}
                   >
@@ -441,11 +439,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-500 rounded"></div>
-                  <span>Best</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded"></div>
-                  <span>Needs Practice</span>
+                  <span>Completed</span>
                 </div>
               </div>
             </div>
