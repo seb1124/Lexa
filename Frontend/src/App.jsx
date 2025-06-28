@@ -1,14 +1,23 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import SignLanguageApp from "./Components/SignLanguageApp";
+import { useState } from 'react';
+import LandingPage from './Components/LandingPage';
+import SignLanguageApp from './Components/SignLanguageApp';
 
 function App() {
+  const [showLandingPage, setShowLandingPage] = useState(true);
+
+  const handleStartLearning = () => {
+    setShowLandingPage(false);
+  };
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<SignLanguageApp />} />
-      </Routes>
-    </BrowserRouter>
+    <>
+      {showLandingPage ? (
+        <LandingPage onStartLearning={handleStartLearning} />
+      ) : (
+        <SignLanguageApp />
+      )}
+    </>
   );
 }
 
