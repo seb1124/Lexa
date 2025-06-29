@@ -48,7 +48,7 @@ const SignLanguageApp = ({ onBackToLanding }) => {
   }
   
   // KNN Classifier
-  function classifyGesture(input, k = 5, threshold = 0.5) {
+  function classifyGesture(input, k = 5, threshold = 0.4) { 
     if (trainingData.length === 0) return "None";
     const distances = trainingData.map((sample, i) => ({
       label: trainingLabels[i],
