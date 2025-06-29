@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Hand, Trophy, TrendingDown, Play, Pause, RotateCcw, ArrowLeft } from 'lucide-react';
+import aslTraining from '../data/aslTrainingData.json';
 
 const MP_HANDS_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js";
 const MP_CAMERA_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js";
@@ -217,22 +218,8 @@ const SignLanguageApp = ({ onBackToLanding }) => {
   // Fetch training data from backend API when session starts
   useEffect(() => {
     if (!sessionActive) return;
-
-    const fetchTrainingData = async () => {
-      try {
-        const response = await fetch('/api/load-model');
-        const result = await response.json();
-        // Expecting result.data.trainingData and result.data.trainingLabels
-        if (result.status === 'success' && result.data) {
-          setTrainingData(result.data.trainingData || []);
-          setTrainingLabels(result.data.trainingLabels || []);
-        }
-      } catch (err) {
-        console.error('Failed to fetch training data:', err);
-      }
-    };
-
-    fetchTrainingData();
+    setTrainingData(aslTraining.trainingData);
+    setTrainingLabels(aslTraining.trainingLabels);
   }, [sessionActive]);
 
   useEffect(() => {
